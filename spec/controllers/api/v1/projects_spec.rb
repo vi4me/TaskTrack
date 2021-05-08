@@ -11,10 +11,6 @@ RSpec.describe Api::V1::ProjectsController, type: :controller do
   describe "GET /index" do
     let!(:projects) { create_list(:project, 2) }
 
-    it "should have a current_user" do
-      expect(subject.current_user).to_not eq(nil)
-    end
-
     it "renders a successful response" do
       get :index
 
@@ -23,19 +19,26 @@ RSpec.describe Api::V1::ProjectsController, type: :controller do
     end
   end
 
-  describe "GET /show" do
-    let!(:project) { create(:project) }
-
-    it "renders a successful response" do
-      get :show, params: { id: project }
-
-      expect(response).to be_successful
-      expect(assigns(:project)).to be_persisted
-      expect(assigns(:project)).to be_a(Project)
+  describe "GET /old or newest project" do
+    it 'should return project in the proper order' do
+      old_project = create :project
+      newer_project = create :project
+      expect((Project).first['id']).to eq(old_project.id)
+      expect((Project).last['id']).to eq(newer_project.id)
     end
+  end
 
-    it "routes to #show" do
-      should route(:get, 'api/v1/projects/1').to(action: :show, id: 1)
+  describe "paginate" do
+    let!(:project1) { create(:project, title: 'now', created_at: DateTime.now) }
+    let!(:project2) { create(:project, title: 'yesterday', created_at: DateTime.yesterday) }
+
+    it 'should paginate results' do
+
+      get :index, params: { page: 2, per_page: 1 }
+
+      expect(JSON.parse(response.body).length).to eq 1
+      expect(JSON.parse(response.body).first['id']).to eq(project2.id)
+      # expect(JSON.parse(response.body)).to contain_exactly("yesterday")
     end
   end
 
@@ -56,23 +59,76 @@ RSpec.describe Api::V1::ProjectsController, type: :controller do
     end
   end
 
-  describe "POST /create" do
-    context "with valid parameters" do
+  describe "GET /show" do
+    let!(:project) { create(:project) }
 
-      it "creates a new Project" do
-        project = Project.create(id: 1, title: 'title', complexity: 3, user: user)
-        post :create
-        expect { subject }.to change(Project, :count).by 1
-      end
+    it "renders a successful response" do
+      get :show, params: { id: project }
 
-      it "renders a JSON response with the new project" do
-        project = Project.create(id: 1, title: 'title', complexity: 3, user: user)
-
-        post :create
-        expect(response).to have_http_status(:created)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
+      expect(response).to be_successful
+      expect(assigns(:project)).to be_persisted
+      expect(assigns(:project)).to be_a(Project)
     end
+
+    it "routes to #show" do
+      should route(:get, 'api/v1/projects/1').to(action: :show, id: 1)
+    end
+  end
+
+
+
+
+
+
+
+
+  describe '#destroy' do
+    let(:user) { create :user }
+    let(:project) { create :project}
+
+    subject { delete :destroy, params: { id: project.id } }
+
+    it 'should have 204 status code' do
+       subject
+       expect(response).to have_http_status(:no_content)
+     end
+
+     it 'should have empty json body' do
+        subject
+        expect(response.body).to be_blank
+      end
+
+      it 'should destroy the project' do
+        project
+        expect { subject }.to change(Project, :count).by -1
+      end
+  end
+
+
+
+
+
+
+
+
+
+  # describe "POST /create" do
+  #   context "with valid parameters" do
+  #
+  #     it "creates a new Project" do
+  #       project = Project.create(id: 1, title: 'title', complexity: 3, user: user)
+  #       post :create
+  #       expect { subject }.to change(Project, :count).by 1
+  #     end
+  #
+  #     it "renders a JSON response with the new project" do
+  #       project = Project.create(id: 1, title: 'title', complexity: 3, user: user)
+  #
+  #       post :create
+  #       expect(response).to have_http_status(:created)
+  #       expect(response.content_type).to match(a_string_including("application/json"))
+  #     end
+  #   end
   #
     # context "with invalid parameters" do
     #   let!(:project) { Project.create(attributes: { title: '', complexity: 3, user_id: user.id} ) }
@@ -90,7 +146,7 @@ RSpec.describe Api::V1::ProjectsController, type: :controller do
       #   expect(response.content_type).to eq("application/json")
       # end
    #  end
-  end
+  # end
   #
   # describe "PATCH /update" do
   #   context "with valid parameters" do

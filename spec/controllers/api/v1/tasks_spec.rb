@@ -10,13 +10,29 @@ RSpec.describe Api::V1::TasksController, type: :controller do
   end
 
   describe "GET /index" do
-    let!(:tasks) { create_list(:task, 2) }
+    subject { get :index, params: { project_id: project.id } }
 
-    it "should have a current_user" do
-      expect(subject.current_user).to_not eq(nil)
+    it "returns a success response" do
+      subject
+      expect(response).to have_http_status(:ok)
     end
 
+    it 'should return only tasks belonging to project' do
+      task = create :task, project: project
+      create :task
+      subject
+      expect(JSON.parse(response.body).length).to eq(1)
+      expect(JSON.parse(response.body).first['id']).to eq(task.id)
+    end
   end
+
+
+
+
+
+
+
+
 
   # describe "POST /create" do
   #   context "with valid parameters" do

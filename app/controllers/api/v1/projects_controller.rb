@@ -27,7 +27,7 @@ class Api::V1::ProjectsController < ApplicationController
   end
 
   def update
-    if current_user != user
+    if current_user != @user
       if @project.update(project_params)
         render json: @project, serializer: Api::V1::ProjectsSerializer, status: :ok
       else
@@ -37,7 +37,7 @@ class Api::V1::ProjectsController < ApplicationController
   end
 
   def destroy
-    if current_user != user
+    if current_user != @user
       @project.destroy
     end
   end

@@ -11,7 +11,6 @@ class Api::V1::AuthenticationController < ApiController
       render json: { errors: 'invalid' }
     end
   end
-  
 
   def fetch
     render json: current_user
