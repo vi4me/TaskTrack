@@ -1,4 +1,4 @@
-class Api::V1::ProjectsController < ApplicationController
+class Api::V1::ProjectsController < ApiController
 
   before_action :set_project, only: [:show, :old_tasks, :update, :destroy]
   before_action :authenticate_user!
@@ -20,9 +20,10 @@ class Api::V1::ProjectsController < ApplicationController
   def create
     @project = Project.new(project_params)
     if @project.save
-      render json: @project, serializer: Api::V1::ProjectsSerializer, status: :created
+      render json: @project, serializer: Api::V1::OldTasksSerializer, status: :created
     else
-      render json: @project.errors, serializer: ErrorSerializer
+      render json: @project.errors, status: :unprocessable_entity
+
     end
   end
 
@@ -31,7 +32,7 @@ class Api::V1::ProjectsController < ApplicationController
       if @project.update(project_params)
         render json: @project, serializer: Api::V1::ProjectsSerializer, status: :ok
       else
-        render json: @project.errors, serializer: ErrorSerializer
+        render json: @project.errors
       end
     end
   end
@@ -48,6 +49,6 @@ class Api::V1::ProjectsController < ApplicationController
     end
 
     def project_params
-      params.require(:project).permit(:title, :complexity)
+      params.require(:project).permit(:title, :complexity, :user_id)
     end
 end
